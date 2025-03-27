@@ -21,6 +21,7 @@ class Comment:
         self.content = content
         self.created = created or datetime.now()
 
+
 comment = Comment(email='leila@example.com', content='foo bar')
 
 
@@ -34,13 +35,23 @@ class CommentSerializer(serializers.Serializer):
     content = serializers.CharField(max_length=200)
     created = serializers.CharField()
 
+# create e update são opcionais. usar dependendo do caso de uso da classe serializadora
+    def create(serlf, validated_data):
+        return Comment.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
+        instance.content = validated_data.get('content', instance.content)
+        instance.created = validated_data.get('created', instance.created)
+        instance.save()
+        return instance
 
 
 # *Serializando um comentario (comment)*
 # transformando um objeto em dados nativos do python(DICT)
-serializer = CommentSerializer(comment)
+serializer = CommentSerializer(comment) 
 print(f"Dicionario python: {serializer.data}")
-# Dicionario python: # {'email': 'leila@example.com', 'content': 'foo bar', 'created': '2025-03-27T15:17:10.375877'}
+# Dicionario python: {'email': 'leila@example.com', 'content': 'foo bar', 'created': '2025-03-27T15:17:10.375877'}
 
 
 
@@ -66,3 +77,29 @@ serializer.is_valid()
 
 serializer.validated_data
 # {'content': 'foo bar', 'email': 'leila@example.com', 'created': datetime.datetime(2025, 03, 22, 16, 20, 09, 822243)}
+
+
+comment = serializer.save()
+
+# ********************************
+
+# .save() irá criar uma nova instancia, aqui estamos recebendo um json
+serializer = CommentSerializer(data=data)
+
+# .save() vai atualizar a instancia já existente de comment, aqui estamos recebendo um json.
+serializer = CommentSerializer(comment, data=data)
+
+# Caso queira injetar dados adicionais no ponto dee salvar a instancia, como usuario atual, hora, etc
+# esse metodo abaixo será chamado na view
+'''serializer.save(owner=request.user)'''
+
+'''
+Ao desserializar dados, você sempre precisa chamar is_valid() antes de tentar acessar os dados '
+validados ou salvar uma instância de objeto. Se ocorrerem erros de validação, '
+a propriedade .errors conterá um dicionário representando as mensagens de erro resultantes. Por exemplo:'
+'''
+serializer = CommentSerializer(data={'email': 'foobar', 'content': 'baz'})
+serializer.is_valid()
+# False
+serializer.errors
+# {'email': ['Enter a valid e-mail address.'], 'created': ['This field is required.']}
