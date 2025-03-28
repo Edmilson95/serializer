@@ -54,6 +54,8 @@ class EventoSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         #Não faz sentido sobreescrever o create se vc nao alterar o compartamento padrao dele como esta aqui agora!!
+        #Caso tenha algum relacionamento na tabela, nao sera salvo, precisa tirar o relacionamento do validated_data,
+        #salvar a instancia, e dps de estar salva a instancia, salva o relacionamento novamente na tabela.
         return Evento.objects.create(**validated_data)
     
     def update(self, instance, validated_data):
